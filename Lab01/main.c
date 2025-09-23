@@ -1,20 +1,20 @@
 #include <stdio.h>
 #include <string.h>
 
-char *cercaRegexp(char *src, char *regexp); 
+char *cercaRegexp(char *src, char *regexp);
 
-int main() { 
-    char src[34] = "foto";
-    char regexp[10] = "[^mn]oto";
+int main() {
+    char src[34] = "fAto";
+    char regexp[10] = "f\\Ato";
     char* firstOccurence = cercaRegexp(src, regexp);
     printf("Posizione in %s\n", firstOccurence);
-    return 0; 
+    return 0;
 }
 
 char *cercaRegexp(char *src, char *regexp){
     int ok;
     char * firstOccurence = NULL;
-    for(int j = 0; j < strlen(src) ; j++){ // scoriamo sia src che regexp, 
+    for(int j = 0; j < strlen(src) ; j++){ // scoriamo sia src che regexp,
         ok = 1;
         int i,k;
         for(i = 0, k = j; i < strlen(regexp);k++, i++){
@@ -28,14 +28,15 @@ char *cercaRegexp(char *src, char *regexp){
                         ok = 0;
                         if(regexp[i] == src[k]){
                             ok = 1;
-                            break; 
+                            break;
                         }
                     }while(regexp[++i] != ']');
                 else{
                     ok = 1;
                     do{
                         if(regexp[i] == src[k]){
-                            ok = 0;  
+                            ok = 0;
+                            break;
                         }
                     }while(regexp[++i] != ']');
                 }
