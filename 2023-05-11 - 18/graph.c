@@ -59,3 +59,43 @@ void GRAPHprint(Graph g){
 		printf("\n");
 	}
 }
+
+
+
+Graph SOLload(FILE * file){
+	int i,j, v;
+
+	fscanf(file,"%d\n", &v);
+	Graph sol = malloc(sizeof(Graph*));
+	sol->matj = malloc(sizeof(int*)*v);
+	sol->V = v;
+	for(i = 0; i < v; i++){
+		sol->matj[i] = malloc(sizeof(int) * v);
+		
+		for(j = 0; j < v; j++){
+			fscanf(file, "%d ",&sol->matj[i][j]);	
+		}
+	}
+	return sol;
+
+}
+
+int SOLcheck(Graph sol){
+	int i,j,k,error;
+
+
+	for(i=0;i< sol->V; i++)
+		for(j = 0; j < sol->V; j++){
+			if(i<j){
+				if(sol->matj[i][j] > 0){
+					k = 0;
+					error = 1
+					for(k = 0; k < 	
+				}	
+			}
+		}
+	
+	
+	return 0;
+}
+

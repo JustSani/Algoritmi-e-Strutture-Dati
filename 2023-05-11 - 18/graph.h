@@ -7,3 +7,4 @@ Graph GRAPHinit(int v);
 void GRAPHfree(Graph g);
 Graph GRAPHload(FILE *fin);
 void GRAPHprint(Graph g);
+Graph SOLload(FILE * file);
