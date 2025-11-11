@@ -49,11 +49,13 @@ Graph GRAPHload(FILE *fin){
 
 void GRAPHprint(Graph g){
 	int i,j;
-	printf("/ ");
+	printf("  | ");
 	for(i = 0; i < g->V; i++) printf("%d ",i);
+	printf("\n--+");
+	for(i = 0; i < g->V; i++)printf("--");
 	printf("\n");
 	for(i = 0;i < g->V; i++){
-		printf("%d ",i);
+		printf("%d | ",i);
 		for(j = 0; j < g->V;j++)
 			printf("%d ", g->matj[i][j]);
 		printf("\n");
@@ -73,29 +75,98 @@ Graph SOLload(FILE * file){
 		sol->matj[i] = malloc(sizeof(int) * v);
 		
 		for(j = 0; j < v; j++){
-			fscanf(file, "%d ",&sol->matj[i][j]);	
+			fscanf(file, "%d ",&sol->matj[i][j]);
 		}
 	}
 	return sol;
 
 }
 
-int SOLcheck(Graph sol){
-	int i,j,k,error;
+int isKalreadyInUse(int * solV,int n, int k){
+	int i;
+	for(i = 0; i < n; i++){
+		if(solV[i] == k)
+			return 1;
+	}
+	return 0;
+} 
 
-
-	for(i=0;i< sol->V; i++)
-		for(j = 0; j < sol->V; j++){
-			if(i<j){
-				if(sol->matj[i][j] > 0){
-					k = 0;
-					error = 1
-					for(k = 0; k < 	
-				}	
+void recursiveCheckIfTriangle(Graph sol,int i, int j,int n,int* solV, int **mark, int *triangles){
+	int c = 0, k;
+	if (n == 3){
+		if(j == i || sol->matj[j][i] == 1){
+			mark[solV[0]][solV[1]] = 1;
+			mark[solV[1]][solV[0]] = 1;
+			mark[solV[1]][solV[2]] = 1;
+			mark[solV[2]][solV[1]] = 1;
+			mark[solV[2]][solV[0]] = 1;
+			mark[solV[0]][solV[2]] = 1;
+			for(k = 0; k < 3; k++)
+				printf("%d ", solV[k]);
+			printf("\n");
+			(*triangles)++;
+		}
+	}
+	else{
+		for(k = 0; k < sol->V; k++){
+			if(isKalreadyInUse(solV,n, k) == 0 && mark[j][k] == 0 && sol->matj[j][k] == 1){
+				solV[n] = k;
+				recursiveCheckIfTriangle(sol, i, k, n+1,solV, mark, triangles);
 			}
 		}
-	
-	
-	return 0;
+	}
 }
+
+int countTrianglePackings(Graph sol){
+	int i,j,k,error;
+	int numberOfTrianglePacking = 0;
+	int **mark = malloc(sizeof(int *) * sol->V);
+	int *solV = malloc(sizeof(int)* 3);
+
+	for(i = 0; i < sol->V; i++){
+		mark[i] = malloc(sizeof(int)* sol->V);
+		for(j = 0; j < sol->V; j++){
+			mark[i][j] = 0;
+		}
+	}
+
+	
+	for( i = 0; i < sol->V; i++){
+		solV[0] = i;
+		recursiveCheckIfTriangle(sol, i, i, 1,solV, mark, &numberOfTrianglePacking);
+	}
+
+	for(i = 0; i < sol->V; i++){	
+		free(mark[i]);	
+	}
+	free(mark);
+	free(solV);
+
+	return numberOfTrianglePacking;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

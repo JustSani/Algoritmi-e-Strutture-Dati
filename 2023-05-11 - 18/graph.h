@@ -8,3 +8,4 @@ void GRAPHfree(Graph g);
 Graph GRAPHload(FILE *fin);
 void GRAPHprint(Graph g);
 Graph SOLload(FILE * file);
+int countTrianglePackings(Graph sol);
