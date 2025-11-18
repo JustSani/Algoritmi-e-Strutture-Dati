@@ -99,7 +99,122 @@ int isHead(int *scheda){
 	return 0;
 }
 
+void PUZZLEprintReadable(PUZZLE p) {
+    	int i, j, sum;
+    	for (i = 0; i < p->N * p->N; i++) {
+		if(i%p->N == 0 )
+			printf("\n");
+		sum = 0;
+        	for (j = 0; j < 4; j++) {
+			sum += p->schede[i][j] * pow(10,j);
+        	}
+		switch(sum){
+			case 0:
+				printf("  ");
+			break;
+			case 110:
+				printf("\\ ");
+			break;
+			case 101:
+				printf("/ ");
+			break;
+			case 1100:
+				printf("- ");
+			break;
+			case 11:
+				printf("| ");
+			break;
+			case 1010:
+				printf("/ ");
+				break;
+			case 1001:
+				printf("\\ ");
+				break;
+			default:
+				printf("o ",sum);
+			break;
+				
+		}
 
+    	}
+	printf("\n");
+}
+
+
+
+// direzionePrecedente: -1 (qualsiasi direzione), 0 Nord, 1 Sud, 2 Ovest, 3 Est
+int checkConnection(PUZZLE p, int node, int direzionePrecedente){
+	//printf("%d\n", node);
+	int foundDirection = 0, recursiveCheck = 0;	
+	int i, r = p->N;
+	int k,l;
+
+	k = node / r;
+	l = node % r;	
+	// caso terminale, la scheda è vuota;
+	if(isCardEmpty(p->schede[r*k + l])){
+		return  -4;
+	}
+	
+	if(isHead(p->schede[node]) == 1 && direzionePrecedente != -1){
+		for(i = 0; p->schede[node][i] != 1; i++);
+		if(i == direzionePrecedente)
+			return 1;
+		else return -3;
+	}
+
+	for(i = 0; i < 4; i++){
+		if(p->schede[node][i] == 1){
+			// check se abbiamo trovato un allineamento
+			if(i == direzionePrecedente){
+				foundDirection = 1;
+			}
+			else{
+				//printf("node: %d",node);
+				//printf("i:%d\n",i);
+				switch(i){
+					case 0: //n
+						//printf("yes");
+						if(k != 0 && !isCardEmpty(p->schede[r * (k-1) + l])){
+							//printf("yes");
+							recursiveCheck = checkConnection(p, r *(k-1) + l, 1);
+						}else printf("nope");
+					break;
+					case 1: //s
+						if(k != r -1 && !isCardEmpty(p->schede[r*(k+1) + l])){
+							recursiveCheck = checkConnection(p, r *(k+1) + l, 0);
+						} 
+					break;
+					case 2: // o
+						if(l != 0 && !isCardEmpty(p->schede[r*k + l - 1])) {
+							recursiveCheck = checkConnection(p, r*k + l - 1, 3);
+						} 
+					break;
+					case 3: //e
+						if(l != r - 1 && !isCardEmpty(p->schede[r*k + l + 1])){
+
+							recursiveCheck = checkConnection(p, r*k + l + 1, 2);
+						}
+					break;
+				}
+			}
+		}
+	}
+	if(direzionePrecedente == -1)
+		return recursiveCheck;
+	if(foundDirection == 1 && recursiveCheck == 1)
+		return 1;
+	//printf("end: i= %d", i);
+	return 0;
+}
+
+
+/* returns:
+	-1: errore negli input (valori accettati NSEO)
+	-2: Sequenza porta ad una certa al non cambio di stato del problema (si fa un movimento inutile che non cambia il problema tra una fase e l'altra)
+	-3: La soluzione non è valida, non vi è connessione tra la testa di partenza e la fine
+
+*/
 int CHECKsol(PUZZLE p, char *sol, int N){
 	int i, j, k;
 	int movement;
@@ -108,7 +223,7 @@ int CHECKsol(PUZZLE p, char *sol, int N){
 	int r = p->N;
 	
 	// numero di carte vuote
-	int mCN= (p->N * p->N)/p->T;
+	int mCN= (p->N * p->N) - p->T;
 	// vettori rispettivamente col i esimo elemento della 
 	int CardToEmpty[mCN], CardToFill[mCN];
 	int movingCardsCounter;
@@ -119,49 +234,51 @@ int CHECKsol(PUZZLE p, char *sol, int N){
 			for(j = 0; j < r; j++){
 				switch (sol[k]){
 					case 'N':
-						if(i != 0 && !isCardEmpty(p->schede[r*i + j] && isCardEmpty(p->schede[r * (i-1) + j]){
+						if(i != 0 && !isCardEmpty(p->schede[r*i + j]) && isCardEmpty(p->schede[r * (i-1) + j])   ){
 							CardToEmpty[movingCardsCounter] = r*i + j;
-							CardToFill[movigCardsCounter] = r*(i-1) + j;
-							movigCardsCounter++;
+							CardToFill[movingCardsCounter] = r*(i-1) + j;
+							movingCardsCounter++;
 							movement++;
 						}
 					break;
 					case 'E':
-						if(j != r && !isCardEmpty(p->schede[r*i + j] && isCardEmpty(p->schede[r*i + j + 1]){
+						if(j != r-1 && !isCardEmpty(p->schede[r*i + j]) && isCardEmpty(p->schede[r*i + j + 1])){
 							CardToEmpty[movingCardsCounter] = r*i + j;
-							CardToFill[movigCardsCounter] = r*i + j + 1;
-							movigCardsCounter++;
+							CardToFill[movingCardsCounter] = r*i + j + 1;
+							movingCardsCounter++;
 							movement++;
 						} 
 					break;
 					case 'O':
-						if(j != 0 && !isCardEmpty(p->schede[r*i + j] && isCardEmpty(p->schede[r*i + j - 1]){
+						if(j != 0 && !isCardEmpty(p->schede[r*i + j]) && isCardEmpty(p->schede[r*i + j - 1])){
 							CardToEmpty[movingCardsCounter] = r*i + j;
-							CardToFill[movigCardsCounter] = r*i + j - 1;
-							movigCardsCounter++;
+							CardToFill[movingCardsCounter] = r*i + j - 1;
+							movingCardsCounter++;
 							movement++;
-						} 
+						}
 					break;
 					case 'S':
-						if(i != r && !isCardEmpty(p->schede[r*i + j] && isCardEmpty(p->schede[r*(i+1) + j]){
+						if(i != r-1 && !isCardEmpty(p->schede[r*i + j]) && isCardEmpty(p->schede[r*(i+1) + j])){
 							CardToEmpty[movingCardsCounter] = r*i + j;
-							CardToFill[movigCardsCounter] = r*(i+1) + j;
-							movigCardsCounter++;
+							CardToFill[movingCardsCounter] = r*(i+1) + j;
+							movingCardsCounter++;
 							movement++;
 						} 
 					break;
-					case default:
-						return 0;
+					default:
+						return -1;
 					break;
-				}			
-			}
-			if(movement == 0) return 0;
-			for(j = 0; j < mCN; j++){
-					switchCards(p, CardToEmpty[j], CardToFill[j]);
+
+				}
 			}
 		}
-	}
+		if(movement == 0) return -2;
 
+		for(j = 0; j < movement; j++){
+			//printf("switching %d %d\n", CardToEmpty[j], CardToFill[j]);
+			switchCards(p, CardToEmpty[j], CardToFill[j]);
+		}
+	}
 
 	// siamo nell ordinamento finale, ora verichiamo se il labirinto si completa
 
@@ -170,20 +287,10 @@ int CHECKsol(PUZZLE p, char *sol, int N){
 	while(!isHead(p->schede[i])){
 		i++;
 	}
+	
+	PUZZLEprint(p);
+	PUZZLEprintReadable(p);
 
-	// controlliamo se la testa si connette alla prossima
+	// controlliamo se partendo dalla testa arriviamo alla coda
 	return checkConnection(p, i, -1);
 }
-
-int checkConnection(PUZZLE p, int node, -1){
-	int i;
-	int vet[4] = {0,0,0,0};
-	for(i = 0; i < 4; i++){
-		vet[i] = checkConnection(PUZZLE p, int 
-	}
-	if(p->scheda[node][0])
-	}
-}
-
-
-

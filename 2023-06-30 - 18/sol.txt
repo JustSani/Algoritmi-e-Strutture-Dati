@@ -1,2 +1,2 @@
-4
-D S S G 
+5
+E N S N N

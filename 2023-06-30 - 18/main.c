@@ -13,7 +13,14 @@ int main(){
 	char *sol = SOLload(fp2, &size);
 	printf("--sol.txt------------\n");
 	SOLprint(sol,size);
+	printf("--PUZZLE-------------\n");
+	PUZZLEprintReadable(p);
 
+	printf("--checkSol-----------\n");
+	int chk = CHECKsol(p, sol, size);
+	
+	printf("check return: %d",chk);
+	
 	SOLfree(sol);
 	PUZZLEfree(p);
 	fclose(fp);
