@@ -1,0 +1,213 @@
+// ESERCIZIO 1 2 punti
+#include "string.h"
+
+const int NR, NC;
+
+typedef struct posizioni *POS;
+
+struct posizioni{
+	int riga;
+	int colonna;
+};
+
+int trovaParola(int riga,int colonna,char ** testo,char ** elenco,int np){
+	int i,j, countChar;	
+	// scorriamo tutte le parole
+	for(i = 0; i < np; i++){
+		// controlliamo se la parola corrente è uguale a quella in questa posizione
+		countChar = 0;
+		for(j = 0; j < strlen(elenco[i]) -1 && colonna + j < NC; j++){
+			if(elenco[i][j] == testo[riga][colonna + j])
+				countChar ++;
+		}
+		
+		if(countChar == strlen(elenco[i] - 1)
+			return i;
+	}
+
+	return -1;
+
+}
+
+// assumo NR e NC come costanti, diversamente si passano come parametri
+void paroleTrovate(char ** testo, char ** elenco, int np, int ** pTrovate, POS ** vettoreposizioni){
+	// allocazione dello spazio per i parametri che ci sono stati passati
+	*pTrovate = malloc(sizeof(int) * np);
+	*listaposizioni = malloc(sizeof(struct posizioni) * np);
+	
+	// per comodita prendiamo il contenuto de puntatori dei parametri e lavoriamo con quelli
+	int * vet = *pTrovate;
+	POS * vPos = *listaposizioni;
+
+	// numero delle parole trovate
+	int k = 0, int indexOfFound = -1; 
+	
+	for(int i = 0; i < NP; i++){
+		for(int j = 0; j < NC; j++){
+			indexOfFound = trovaParola(i,j, testo, elenco, np);
+			if(indexOfFound != -1){
+				vet[k] = indexOfFound;
+				vPos[K]->riga = i;
+				vPos[K]->colonna = j;
+				K++;
+			}
+		}
+	}
+}
+
+
+
+// ESERCIZIO 2 4 punti
+
+
+typedef struct heap * HEAP;
+struct heap{
+	int *vet;
+	int heapsize;
+};
+
+typedef node * NODE;
+struct node{
+	int val;
+	NODE left;
+	NODE right;
+}
+
+typedef struct bt * BT;
+struct bt{
+	NODE head;
+	NODE z;
+};
+NODE NODEinit(){
+	NODE b= malloc(sizeof(struct node));
+	b->left = NULL;
+	b->right = NULL;
+	b->val = -1;
+	return b;
+}
+BT BTinit(){
+	BT b = malloc(sizeof(struct bt));
+	b->z = NODEinit();
+	b->head = b->z;
+}
+
+int RIGHT(int index, int heapsize){
+	return 2*index +1;
+}
+
+int LEFT(int index, int heapsize){
+	return 2*index;
+}
+
+void rHEAPtoBT(HEAP h, NODE a, NODE z,int index, int deapth){
+	if(index >= h->heapsize)
+		return;
+	a->left = NODEinit();
+	b->right = NODEinit();
+	rHEAPtoBT(HEAP h, a->left, LEFT(index, h->heapsize), deapth+1);
+	rHEAPtoBT(HEAP h, a->right, RIGHT(index, h->heapsize), deapth+1);
+	
+	a->val = h->vet[index];
+}
+BT HEAPtoBT(HEAP h){
+	BT bst = BTinit();
+
+	rHEAPtoBT(h, bst->head,bst->z,0, 0);
+	return bst;
+}
+
+int cmpNode(NODE a, NODE z){
+	if(a->right == z->right && a->left == z->left && a->val == z->val)
+		return 0;
+	return 1;
+}
+
+int rExtractLast(NODE a, NODE z){
+	// caso terminale
+	if(cmpNode(a->right,z) == 0 && cmpNode(a->left, z) == 0){
+		int temp = a->val;
+		free(a->right);
+		free(a->left);
+		a->right = NULL;
+		a->left = NULL;
+		a->val = -1; // rendiamo uguale al nodo sentinella
+		return temp;
+	}
+	if(cmpNode(a->right,z) == 0)
+		return rExtractLast(a->left, z);
+
+	return rExtractLast(a->right,z);
+}
+
+int BTextractLast(BT bt){
+	return rExtractLast(bt->head, bt->z);
+}
+
+
+
+
+// ESERCIZIO 3 6 punti
+
+Domanda 1: giustificare il modello combinatorio
+Il modello è quello delle distribuzioni con ripetizione con k = B
+
+Domanda 2: si descrivano i criteri di pruning adottati o il motivo della loro assenza
+Il pruning viene inserito per rispettare il criterio specificato che 0 non può essere la cifra più significativa e che 1 cifra si può ripetere solo più di una volta. 
+
+Domanda 3: codice
+
+int pruningCheck(int sol,int pos,int elemento,int* allowRepeat){
+	int count = 0;
+	for(int i = 0; i < pos; i++){
+		if(i != elemento)
+			count += allowRepet[i];
+	} 
+	if(count == 0)
+		return 1;
+	return 0;
+}
+
+int checkSum(int sol,int B,int minS){
+	int i, sum = 0;
+	for(i = 0; i < B; i++)
+		sum += sol[i];
+	if(sum >= minS)
+		return 1;
+
+	return 0;
+}
+
+void rGeneraSol(int B, int NC, int minS,int *sol, int pos){
+	int i,j;
+	if(pos >= B){
+		if(checkSum(sol, B, minS)){
+			for(i = 0; i < B; i++) printf("%d, ", sol[i]);
+			printf("\n");
+		}
+	}
+	for(i = 0; i < NC; i++){
+		// pruning per controllare se possiamo inserire
+		if(!(pos == B-1 && i == 0) && allowRepeat[i] > 0 || pruningCheck(sol, pos, i, allowRepeat)){
+			allowRepeat[i]++;
+			sol[pos] = i;
+			rGeneraSol(B, NC, minS, sol, pos+1);
+			allowRepeat[i]--;
+		}
+	}
+}
+
+void generaNumeri(int B, int NC, int minS){
+	int i;
+	int * sol = malloc(sizeof(int)*B); 
+	int * allowRepeat = malloc(sizeof(int)*B);
+	for(i = 0; i < B; i++) allowRepeat[i] = 0;
+	rGeneraSol(B,NC,minS, sol, 0);
+	free(sol);
+	free(allowRepeat);
+}
+
+
+
+
+
+

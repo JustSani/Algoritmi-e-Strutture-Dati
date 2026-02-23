@@ -1,0 +1,353 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+// Assumiamo queste struct e costanti definite come da tua traccia
+typedef struct posizioni {
+    int riga;
+    int colonna;
+} POS;
+
+// Funzione helper per verificare se un carattere è un delimitatore (non alfabetico)
+int is_delim(char c) {
+    return !isalpha(c);
+}
+
+void paroleTrovate(char **testo, int NR, int NC, char **elenco, int np, int **out_indiciParole, POS **out_posizioni, int *out_totale) {
+    
+    int capacity = 10; // Dimensione iniziale del buffer
+    int k = 0;         // Contatore occorrenze trovate
+
+    // Allocazione iniziale (non usiamo np, perché le occorrenze possono essere di più o di meno)
+    int *vettIndici = malloc(sizeof(int) * capacity);
+    POS *vettPos = malloc(sizeof(POS) * capacity);
+
+    if (!vettIndici || !vettPos) return; // Controllo allocazione fallita
+
+    for (int r = 0; r < NR; r++) {
+        for (int c = 0; c < NC; c++) {
+            
+            // OTTIMIZZAZIONE E CONTROLLO DELIMITATORE SINISTRO:
+            // Se il carattere precedente è una lettera, non può essere l'inizio di una parola.
+            // Saltiamo direttamente.
+            if (c > 0 && isalpha(testo[r][c-1])) continue;
+            
+            // Se il carattere corrente non è una lettera, non inizia nessuna parola.
+            if (!isalpha(testo[r][c])) continue;
+
+            // Controllo contro tutte le parole dell'elenco
+            for (int i = 0; i < np; i++) {
+                char *parola = elenco[i];
+                int len = strlen(parola);
+
+                // 1. La parola entra nella riga?
+                if (c + len > NC) continue;
+
+                // 2. Controllo DELIMITATORE DESTRO:
+                // Se dopo la parola c'è ancora una lettera, non è una parola isolata.
+                if (c + len < NC && isalpha(testo[r][c + len])) continue;
+
+                // 3. Confronto effettivo dei caratteri
+                if (strncmp(&testo[r][c], parola, len) == 0) {
+                    
+                    // Trovata! Gestione memoria dinamica
+                    if (k >= capacity) {
+                        capacity *= 2;
+                        int *tempInd = realloc(vettIndici, sizeof(int) * capacity);
+                        POS *tempPos = realloc(vettPos, sizeof(POS) * capacity);
+                        
+                        if (!tempInd || !tempPos) { 
+                            // Gestione errore allocazione (in esame basta return)
+                            return; 
+                        }
+                        vettIndici = tempInd;
+                        vettPos = tempPos;
+                    }
+
+                    // Salvataggio dati
+                    vettIndici[k] = i;      // Salviamo l'indice della parola nell'elenco
+                    vettPos[k].riga = r;
+                    vettPos[k].colonna = c;
+                    k++;
+
+                    // Se abbiamo trovato una parola che inizia qui, non ne possono iniziare altre
+                    // (assumendo parole non sovrapposte che iniziano allo stesso indice, che è impossibile)
+                    break; 
+                }
+            }
+        }
+    }
+
+    // Assegnazione ai puntatori di uscita
+    *out_indiciParole = vettIndici;
+    *out_posizioni = vettPos;
+    *out_totale = k; // Utile restituire quanti elementi abbiamo trovato
+}
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+
+#include <stdio.h>
+#include <stdlib.h>
+
+// Definizione del tipo di dato (assumiamo int come da tuo esempio)
+typedef int Item;
+
+// --- DEFINIZIONE STRUTTURE DATI ---
+
+// Nodo dell'albero binario
+typedef struct node *NODE;
+struct node {
+    Item val;
+    NODE left;
+    NODE right;
+};
+
+// Wrapper per l'Albero Binario (BT)
+// Richiesto: puntatore alla radice e size
+typedef struct bt *BT;
+struct bt {
+    NODE root;
+    int size;
+};
+
+// Struttura HEAP (come da testo)
+typedef struct heap *HEAP;
+struct heap {
+    Item *vet;
+    int heapsize;
+};
+
+// --- FUNZIONI AUSILIARIE ---
+
+// Crea un nuovo nodo
+NODE NODEcreate(Item val) {
+    NODE n = malloc(sizeof(struct node));
+    n->val = val;
+    n->left = NULL;
+    n->right = NULL;
+    return n;
+}
+
+// Inizializza l'albero vuoto
+BT BTinit() {
+    BT b = malloc(sizeof(struct bt));
+    b->root = NULL;
+    b->size = 0;
+    return b;
+}
+
+// --- PARTE 1: HEAPtoBT ---
+
+/* * Funzione ricorsiva di supporto.
+ * index: indice corrente nell'array dell'heap
+ * n: dimensione totale dell'heap
+ */
+NODE rHEAPtoBT(Item *vet, int n, int index) {
+    // Caso base: se l'indice esce dall'array, il nodo non esiste
+    if (index >= n) {
+        return NULL;
+    }
+
+    // Creazione del nodo corrente
+    NODE x = NODEcreate(vet[index]);
+
+    // Costruzione ricorsiva dei sottoalberi
+    // Formule per Heap 0-based: sx = 2i+1, dx = 2i+2
+    x->left = rHEAPtoBT(vet, n, 2 * index + 1);
+    x->right = rHEAPtoBT(vet, n, 2 * index + 2);
+
+    return x;
+}
+
+BT HEAPtoBT(HEAP h) {
+    BT bst = BTinit();
+    if (h == NULL || h->heapsize == 0) return bst;
+
+    bst->size = h->heapsize;
+    // Avvia la ricorsione dall'indice 0 (radice)
+    bst->root = rHEAPtoBT(h->vet, h->heapsize, 0);
+    
+    return bst;
+}
+
+// --- PARTE 2: BTextractLast ---
+
+/*
+ * Algoritmo di navigazione bit a bit:
+ * In un albero completo (come un Heap), il percorso dalla radice all'n-esimo nodo
+ * è codificato nella rappresentazione binaria di 'n'.
+ * Esempio n=5 (binario 101): Radice(1) -> 0 (Sinistra) -> 1 (Destra).
+ * Ignoriamo il primo bit (MSB) che rappresenta la radice stessa.
+ */
+Item BTextractLast(BT bt) {
+    if (bt == NULL || bt->root == NULL) {
+        // Gestione errore o albero vuoto (restituire valore sentinella o gestire eccezione)
+        return -1; 
+    }
+
+    // Caso speciale: Solo la radice
+    if (bt->size == 1) {
+        Item val = bt->root->val;
+        free(bt->root);
+        bt->root = NULL;
+        bt->size--;
+        return val;
+    }
+
+    // 1. Troviamo il nodo PADRE dell'ultimo nodo.
+    // L'ultimo nodo è alla posizione logica 'n' (uguale a bt->size).
+    int n = bt->size;
+    
+    NODE parent = bt->root;
+    NODE toDelete = NULL;
+
+    // Calcoliamo la lunghezza in bit di n per sapere dove iniziare
+    // Esempio: n=5 (101), bitLen=3. Dobbiamo guardare i bit agli indici 1 e 0.
+    int bitLen = 0;
+    int temp = n;
+    while (temp > 0) {
+        temp >>= 1;
+        bitLen++;
+    }
+
+    // Scendiamo nell'albero fino al PADRE.
+    // Iteriamo dal bit subito sotto l'MSB (bitLen-2) fino al bit 1.
+    // Il bit 0 ci servirà per scegliere quale figlio cancellare.
+    for (int i = bitLen - 2; i > 0; i--) {
+        // Controlla se l'i-esimo bit è 1 o 0
+        if ((n >> i) & 1) {
+            parent = parent->right; // 1 -> Destra
+        } else {
+            parent = parent->left;  // 0 -> Sinistra
+        }
+    }
+
+    // Ora 'parent' è il padre del nodo da cancellare.
+    // Controlliamo l'ultimo bit (bit 0) per sapere se cancellare il figlio sx o dx.
+    if (n & 1) { // L'ultimo bit è 1 -> nodo a destra
+        toDelete = parent->right;
+        parent->right = NULL;
+    } else {     // L'ultimo bit è 0 -> nodo a sinistra
+        toDelete = parent->left;
+        parent->left = NULL;
+    }
+
+    Item val = toDelete->val;
+    free(toDelete);
+    bt->size--; // Decrementiamo la size
+
+    return val;
+}
+
+// --- MAIN DI ESEMPIO (Per testare) ---
+int main() {
+    // Creazione manuale di un HEAP per test
+    struct heap h_stack;
+    HEAP h = &h_stack;
+    int arr[] = {10, 5, 15, 2, 7, 12}; // Rappresentazione array dell'heap
+    /*
+          10
+         /  \
+        5    15
+       / \   /
+      2   7 12
+    */
+    h->vet = arr;
+    h->heapsize = 6;
+
+    // Test 1: HEAPtoBT
+    printf("Creo BT da Heap...\n");
+    BT bt = HEAPtoBT(h);
+    printf("BT creato. Size: %d, Root: %d\n", bt->size, bt->root->val);
+
+    // Test 2: BTextractLast
+    // Dovrebbe rimuovere 12 (l'ultima foglia inserita)
+    printf("Estraggo ultimo: %d\n", BTextractLast(bt)); // Atteso: 12
+    printf("Nuova size: %d\n", bt->size); // Atteso: 5
+
+    // Dovrebbe rimuovere 7
+    printf("Estraggo ultimo: %d\n", BTextractLast(bt)); // Atteso: 7
+    
+    return 0;
+}
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#include <stdio.h>
+#include <stdlib.h>
+
+// Funzione per controllare se inserendo la cifra 'val' violiamo il vincolo delle ripetizioni
+int isRepetitionValid(int val, int B, int *counts) {
+    // Se la cifra non è mai uscita, va bene
+    if (counts[val] == 0) return 1;
+    
+    // Se la cifra è già uscita (counts[val] >= 1), stiamo creando/estendendo una ripetizione.
+    // Questo è permesso SOLO SE nessun'altra cifra è già ripetuta (ovvero ha count > 1).
+    for (int i = 0; i < B; i++) {
+        if (i != val && counts[i] > 1) {
+            return 0; // C'è già un'altra cifra ripetuta ("doppione"), non possiamo ripeterne un'altra
+        }
+    }
+    return 1;
+}
+
+int checkSum(int *sol, int NC, int minS) {
+    int sum = 0;
+    for (int i = 0; i < NC; i++) // Corretto: iterare su NC, non B
+        sum += sol[i];
+    return (sum >= minS);
+}
+
+// Aggiunto allowRepeat ai parametri
+void rGeneraSol(int B, int NC, int minS, int *sol, int pos, int *allowRepeat) {
+    int i;
+    
+    // Caso base: abbiamo riempito tutte le NC cifre
+    if (pos >= NC) { 
+        if (checkSum(sol, NC, minS)) {
+            for (i = 0; i < NC; i++) printf("%d", sol[i]); // Stampa formattata meglio
+            printf("\n");
+        }
+        return;
+    }
+
+    // I candidati sono le cifre della base, da 0 a B-1
+    for (i = 0; i < B; i++) {
+        
+        // 1. Vincolo MSD: la prima cifra (pos 0) non può essere 0
+        if (pos == 0 && i == 0) continue;
+
+        // 2. Vincolo Ripetizione: controlliamo se possiamo aggiungere 'i'
+        if (isRepetitionValid(i, B, allowRepeat)) {
+            
+            sol[pos] = i;           // Assegna cifra
+            allowRepeat[i]++;       // Incrementa conteggio
+            
+            rGeneraSol(B, NC, minS, sol, pos + 1, allowRepeat);
+            
+            allowRepeat[i]--;       // Backtracking
+        }
+    }
+}
+
+void generaNumeri(int B, int NC, int minS) {
+    int *sol = malloc(sizeof(int) * NC);       // Corretto: dimensione NC
+    int *allowRepeat = malloc(sizeof(int) * B); // Corretto: dimensione B (frequenza cifre)
+    
+    // Inizializzazione a 0 importante (calloc o loop manuale)
+    for (int i = 0; i < B; i++) allowRepeat[i] = 0;
+
+    rGeneraSol(B, NC, minS, sol, 0, allowRepeat);
+
+    free(sol);
+    free(allowRepeat);
+}

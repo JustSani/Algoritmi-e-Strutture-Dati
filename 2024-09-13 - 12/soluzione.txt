@@ -1,0 +1,109 @@
+//esercizio 1
+#include "malloc.h"
+
+int* diffVett(int *a, int na, int *b, int nb, int* nc){
+	int *c = malloc(sizeof(int)*(na));
+	int nc2 = 0, k = 0;
+	for(int j = 0; j < na; j++){
+		while(k < nb && a[j] > b[k])
+			k++;
+
+		if(a[j] != b[k])
+			c[nc2++] = a[j];
+	}
+	c = realloc(c, sizeof(int)*nc2);
+	*nc = nc2;
+	return c;
+}
+
+// esercizio 2
+// BST.h
+typedef struct bst * BST;
+
+void BSTprintDEEPEST(BST b);
+
+// BST.C
+#include "BST.h"
+typedef struct node * NODE;
+
+struct node{
+	int value;
+	NODE left;
+	NODE right;
+};
+
+struct bst{
+	NODE root;
+	NODE z;
+};
+void rBSTprintDEEPEST(NODE cnode,NODE z){
+	if(cnode->right == z && cnode->left == z){
+		printf("MAXF: %d\n",cnode->value);
+		return;
+	}
+
+	if(cnode->right != z)
+		rBSTprintDEEPEST(cnode->right, z);
+	else if(cnode->left != z)
+		rBSTprintDEEPEST(node->left, z);
+	printf("%d\n", cnode->value);
+}
+void BSTprintDEEPEST(BST b){
+	if(b->root == b->z || b == NULL){
+		printf("BST is empty\n");
+		return;
+	}
+	
+	rBSTprintDEEPEST(b->root, b->z);
+}
+
+
+// ESERCIZIO 3
+
+void rFindMinPath(char **area, int pos, int N, int M, int r0, int c0, int r1, int c1, int *maxPath){
+	int i,j;
+	if(pos > *maxPath) // ci stiamo mettendo più di quanto abbiamo gia trovato.
+		return;
+
+	if(*maxPath > pos && r0 == r1 && c0 == c1){// caso terminale
+		for(i = 0; i < N; i++){
+			for(j = 0; j < M; j++)
+				printf("%c ",area[i][j]);
+			printf("\n");
+		}
+		*maxPath = pos;
+		return;	
+	}
+
+	if(r0 != 0 && area[r0-1][c0] == '1'){ // NORD
+		area[r0-1][c0] = 'x';
+		rFindMinPath(area,pos+1,N,M,r0-1,c0,r1,c1,maxPath);
+		area[r0-1][c0] = '1';
+	}
+	if(c0 != M && area[r0][c0+1] == '1'){ // EST
+		area[r0][c0+1] = 'x';
+		rFindMinPath(area,pos+1,N,M,r0,c0+1,r1,c1,maxPath);
+		area[r0][c0+1] = '1';
+	}
+	if(r0 != N && area[r0+1][c0] == '1'){ // SUD
+		area[r0+1][c0] = 'x';
+		rFindMinPath(area,pos+1,N,M,r0+1,c0,r1,c1,maxPath);
+		area[r0+1][c0] = '1';
+	}
+	if(c0 != 0 && area[r0][c0-1] == '1'){ // OVEST
+		area[r0][c0-1] = 'x';
+		rFindMinPath(area,pos+1,N,M,r0,c0-1,r1,c1,maxPath);
+		area[r0][c0-1] = '1';
+	}
+}
+
+int minPath(char **area, int N, int M, int r0, int c0, int r1, int c1){
+	int minP;
+	rFindMinPath(area, 0, N, M, r0,c0,r1,c1, &minP);
+	return minP;
+}
+
+
+
+
+
